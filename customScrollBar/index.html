@@ -10,7 +10,8 @@
 <style type="text/css">
 	*{margin:0; padding:0;}
 	#div{ width: 200px; height: 300px; overflow: auto; overflow: hidden; margin: 50px auto; position: relative;}
-	#sonDiv{ width: 95%; float: left;}
+	#sonDiv{ width: 95%; float: left; 
+		transition:  0.2s;-moz-transition:  0.2s; -webkit-transition:  0.2s; -o-transition:  0.2s;}
 	#div .scroll-column{width:2px; height:300px; background-color: #eeeeee; float: right; position: relative;}
 	#div .scroll-bar{ width: 3px;  background-color: red; position: absolute; right: 0; top: 0; }
 </style>
@@ -27,93 +28,78 @@
 			<div class="scroll-bar"></div>
 		</div>
 	</div>
-	<style>
-		#div1{width: 200px; height: 200px; overflow: auto; position: relative;}
-		#div1 .scroll1{width: 50px; height: 100px; background: red; position: absolute; top: 0;right: -50px; z-index: 99;}
-	</style>
-	<div id="div1">
-		<div>
-			但是文本的概念后来主要变成了：“任何由书写所固定下来的任何话语。”对语言学家来说，文本指的是作品的可见可感的表层结构，是一系列语句串联而成的连贯序列。文本可能只是一个单句，例如谚语、格言、招牌等，但比较普遍的是由一系列句子组成。文本和段落的区别在于，文本构成了一个相对封闭、自足的系统。前苏联符号学家洛特曼指出，文本是外观的，即用一定的符号来表示；它是有限的，既有头有尾；它有内部结构。罗兰·巴特文本一方面是能指，即实际的语言符号以及由它们所组成的词、句子和段落章节，另一方面是所指，即固定的确定的和单一的意思，为表达这种意思的正确性所限定。以上从技术上中性地对文本做出基本界定。
-		指，即实际的语言符号以及由它们所组成的词、句子和段落章节，另一方面是所指，即固定的确定的和单一的意思，为表达这种意思的正确性所限定。以上从技术上中性地对文本做出基本界定。号以及由它们所组成的词、句子和段落章节，另一方面是所指，即固定的确定的和单一的意思，为表达这种意思的正确性所限定。以上从技术上中性地对文本做出基本界定。
-		指，即实际的语言符号以及由它们所组成的词、句子和段落章节，另一方面是所指，即固定的确定的和单一的意思，为表达这种意思的正确性所限定。以上从技术上中性地对文本做出基本界定。号以及由它们所组成的词、句子和段落章节，另一方面是所指，即固定的确定的和单一的意思，为表达这种意思的正确性所限定。以上从技术上中性地对文本做出基本界定。
-		指，即实际的语言符号以及由
-		</div>
-		<div class="scroll1">
-			
-		</div>
-	</div>
-	<div style="width:100%; height:700px; background-color:#e0e0e0;"></div>
 	<script type="text/javascript">
-			var createScrollbar = function(padivID, sondivID){
-				var _barMessage = "";
-				var sonDiv = $("#"+sondivID);
-				var paDiv = $("#"+ padivID);
-				var hidePartHeight = sonDiv.height() - paDiv.height();
-				var oneScrollHeight = paDiv.height() / 3;
-				if(hidePartHeight < 0){
-					_barMessage = {"hidePartHeight" : 0};
-				}else{
-					//设每一次滚动文本框里面的内容滚动1/3,计算出滚动次数和滚动条高度
-					var textScrollTimes = parseInt( hidePartHeight / oneScrollHeight);
-					var barHeight = parseInt(paDiv.height()/(textScrollTimes + 1));//由于滚动条有高度所以相当于要多滚一次
-					paDiv.find(".scroll-bar").height(barHeight);
-					_barMessage = {"hidePartHeight" : hidePartHeight, "barHeight" : barHeight, "oneScrollHeight" : oneScrollHeight, "textScrollTimes": textScrollTimes,}
+		function CustomScrollBar(paDiv,sonDiv){
+			this.paDiv = $(paDiv);
+			this.sonDiv = $(sonDiv);
+			this.allowScroll = 1;
+		}
+		CustomScrollBar.prototype.createScrollbar = function(){
+			var hidePartHeight = this.sonDiv.height() - this.paDiv.height();
+			var oneScrollHeight = this.paDiv.height() / 3;
+			if(hidePartHeight < 0){
+				this.barMessage = {"hidePartHeight" : 0};
+			}else{
+				//设每一次滚动文本框里面的内容滚动1/3,计算出滚动次数和滚动条高度
+				var textScrollTimes = parseInt( hidePartHeight / oneScrollHeight);
+				var barHeight = parseInt(this.paDiv.height()/(textScrollTimes + 1));//由于滚动条有高度所以相当于要多滚一次
+				this.paDiv.find(".scroll-bar").height(barHeight);
+				this.barMessage = {"hidePartHeight" : hidePartHeight, "barHeight" : barHeight, "oneScrollHeight" : oneScrollHeight, "textScrollTimes": textScrollTimes,}
+			}
+		}
+		CustomScrollBar.prototype.doScroll = function(upY){
+			this.allowScroll = 0;
+			var scrollBar = this.paDiv.find(".scroll-bar");
+			var barTop = parseInt(scrollBar.css("top"));
+			var sonMarginTop = parseInt(this.sonDiv.css("margin-top"));
+			var eachScrollHeight = this.barMessage.oneScrollHeight;
+			var eachBarHeight = this.paDiv.height() / (this.barMessage.textScrollTimes  + 1);
+			if(upY == 1){
+				//向上
+				if(sonMarginTop >= 0){
+					this.allowScroll = 1;
+					return;
 				}
-				return _barMessage;
-			}
-			var banBodyScroll = function(){
-				var scroll_top = $(document).scrollTop();
-				window.scrollTo(0,0);
-			}
-			var doScroll = function(padivID, sondivID, barMessage, upY){
-				var sonDiv = $("#"+sondivID);
-				var paDiv = $("#"+ padivID);
-				var scrollBar = paDiv.find(".scroll-bar");
-				var barTop = parseInt(scrollBar.css("top"));
-				var sonMarginTop = parseInt(sonDiv.css("margin-top"));
-				var finalScroll = 0;
-				var finaBarScroll = 0;
-				var eachScrollHeight = barMessage.oneScrollHeight;
-				var eachBarHeight = paDiv.height() / (barMessage.textScrollTimes - 0 + 1);
-				if(upY == 1){
-					//向上
-					if(sonMarginTop > -eachScrollHeight){
-						return;
-					}
-					finalScroll = Math.abs(sonMarginTop);
-					finaBarScroll = Math.abs(barTop)
-					if(finalScroll > eachScrollHeight && finalScroll < 2 * eachScrollHeight ){
-						eachScrollHeight = finalScroll;
-						eachBarHeight = finaBarScroll;
-					}
-					sonDiv.css("margin-top",Number(sonMarginTop) + Number(eachScrollHeight) +"px");
-					scrollBar.css("top",Number(barTop)	- Number(eachBarHeight) +"px");
-				}else{
-					//向下
-					finalScroll = sonDiv.height() - paDiv.height() + sonMarginTop	
-					finaBarScroll = paDiv.height() - Math.abs(barTop) - barMessage.barHeight;
-					if(paDiv.height() - sonMarginTop >= sonDiv.height() - eachScrollHeight){
-						return;
-					}
-					
-					if(finalScroll > eachScrollHeight && finalScroll < 2 * eachScrollHeight ){
-						eachScrollHeight = finalScroll;
-						eachBarHeight = finaBarScroll;
-					}
-					sonDiv.css("margin-top", Number(sonMarginTop) - Number(eachScrollHeight) +"px");
-					scrollBar.css("top",Number(barTop)	+ Number(eachBarHeight) +"px");
+				if(-sonMarginTop < eachScrollHeight){
+					eachScrollHeight = -sonMarginTop;
+					eachBarHeight = barTop;
 				}
+				this.sonDiv.css("margin-top",Number(sonMarginTop) + Number(eachScrollHeight) +"px");
+				scrollBar.css("top",Number(barTop)	- Number(eachBarHeight) +"px");
+			}else{
+				//向下
+				finalScroll = this.sonDiv.height() - this.paDiv.height() + sonMarginTop	
+				if(sonMarginTop == -this.barMessage.hidePartHeight){
+					this.allowScroll = 1;
+					return;
+				}
+				if(this.barMessage.hidePartHeight + sonMarginTop < eachScrollHeight ){
+					eachScrollHeight = this.barMessage.hidePartHeight + sonMarginTop;
+					eachBarHeight = this.paDiv.height() - barTop - this.barMessage.barHeight
+				}
+				this.sonDiv.css("margin-top", Number(sonMarginTop) - Number(eachScrollHeight) +"px");
+				scrollBar.css("top",Number(barTop)	+ Number(eachBarHeight) +"px");
 			}
+		}
+		CustomScrollBar.prototype.listenScroll = function(){
+			var _this = this;
+			_this.createScrollbar();
+			_this.sonDiv.on('transitionend webkitTransitionEnd oTransitionEnd',function(){
+				_this.allowScroll = 1;
+			})
+			_this.paDiv.on("mousewheel",function(e){
+				e.preventDefault();
+				var upY = e.deltaY;
+				if(_this.allowScroll == 1){
+					_this.doScroll(upY);
+				}
+			});
+		}
 	</script>
 	
 	<script type="text/javascript">
-		var barMessage = createScrollbar("div", "sonDiv");
-		$("#div").on("mousewheel",function(e){
-			banBodyScroll();
-			banBodyScroll();
-			var upY = e.deltaY;
-			doScroll("div", "sonDiv", barMessage, upY);
-		});
+		var customBar = new CustomScrollBar("#div","#sonDiv");
+		customBar.listenScroll();
 	</script>
 </body>
 </html>
