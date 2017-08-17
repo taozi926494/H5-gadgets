@@ -1,0 +1,26 @@
+[
+	{
+		"name": "蛋炒饭",
+		"price": 15,
+		"salecount": 200,
+		"like": 20
+	},
+	{
+		"name": "回锅肉",
+		"price": 18,
+		"salecount": 100,
+		"like": 30
+	},
+	{
+		"name": "老鸭汤",
+		"price": 48,
+		"salecount": 30,
+		"like": 5
+	},
+	{
+		"name": "红烧肉",
+		"price": 28,
+		"salecount": 120,
+		"like": 60
+	}
+]

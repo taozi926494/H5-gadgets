@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>vuerouter</title>
+	<link rel="stylesheet" href="/test/static/css/vuerouter.css">
+	<script src="https://unpkg.com/vue"></script>
+	<script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+	<div id="app" class="content">
+		<div class="nav">
+			<router-link to="/index_dish" class="leftnav">第一层路由（菜品列表）</router-link>
+			<router-link to="/index_user">第一层路由(传参)</router-link>
+		</div>
+
+		<div class="view">
+			<!-- <keep-alive> -->
+			<router-view></router-view>
+			<!-- </keep-alive> -->
+		</div>
+	</div>
+
+	<script>
+	/*************************** 第一层路由组件 **********************/
+
+		/**
+		*	定义第一层组件的两个组件，index_dish、index_user
+		*	index_dish组件 是与后端交互的例子
+		*		但是每次点击切换第一层路由的时候，index_dish都会去后端请求数据
+		*		如果希望将数据缓存下来，不去请求数据，只需将html中的 <keep-alive>注释去掉
+		*	index_user组件 是多层路由以及路由传参的例子
+		*/
+
+		var index_dish = {
+			template: '<div class="dish-div">\
+							<ul v-for="dish in dishs">\
+								<li>\
+									<h3>{{dish.name}}  ￥{{dish.price}}</h3>\
+									<p>销量：{{dish.salecount}}  喜欢：{{dish.like}}</p>\
+								</li>\
+							</ul>\
+						</div>',
+			data: function(){	// 模板中的data必须为 function
+				return {
+					dishs: []
+				}
+			},
+			mounted: function(){
+				//这里是异步回调使用this的时候注意要在异步之前先定义this，异步回调中的this已不是该组件
+				var _self = this;
+				axios.get('/test/static/data/dish.json')
+					 .then(function(data){
+					 	_self.dishs = data.data
+					 })
+			}
+		}
+
+		/**
+		*	index_user（多层路由及传参）
+		*		去第二层组件，url要从第一层组件补齐
+		*		多层路由中，路由模板中继续使用<route-view></router-view>来定义下层路由的渲染入口
+		*
+		*		路由A--多个参数的传入方法，及参数的模版渲染：
+		*			第一个参数的参数名称省略，第二个参数的参数名称为必须
+		*		路由B--传入参数提供给组件的js来使用
+		*			传入的参数给js使用和给模板渲染有不同（多了个this）
+		*		路由C--继续嵌套第三层路由
+		*/
+		var index_user = {
+			template: '<div class="usr-div">\
+							<p>这是第一层路由（传参）的内容：</p>\
+							<div>\
+								<div class="usr-nav-div">\
+									<router-link to="/index_user/user_a/325/name/joe" class="usr-nav">去第二层路由A,并传入参数</router-link>\
+								</div>\
+								<div class="usr-nav-div">\
+									<router-link to="/index_user/user_b/325" class="usr-nav">去第二层路由B, 并传入一个数字</router-link>\
+									<router-link to="/index_user/user_b/joe" class="usr-nav">去第二层路由B，并传入一个字符串</router-link>\
+								</div>\
+								<div class="usr-nav-div">\
+									<router-link to="/index_user/user_c" class="usr-nav">去第二层路由C，它下面还有第三层路由</router-link>\
+								</div>\
+							</div>\
+							<router-view class="second-view"></router-view>\
+						</div>'
+		}
+
+
+	/*************************** 第二层路由组件 **********************/
+
+		
+
+		var user_a = {
+			template: '<p>这是第二层路由组件A 传入的参数直接显示，其中参数id为：{{ $route.params.id }}， 参数name为：{{ $route.params.name}}</p>'
+		}
+
+		/**
+		*	mounted挂载的时候使用js来操作一次路由参数，可以在第一次调用judgeParams来判断参数
+		*	同时，由于传入参数相当于多次访问同一个路由，会使用缓存来渲染模板，
+		*	其生命周期钩子会全部失效（mounted, created, updated）
+		*	所以，要使用watch来继续监听路由参数的变化，从而获取路由传入的参数，对其进行判断
+		*/
+
+		var user_b = {
+			template: '<div>\
+						  <p>这是第二层路由组件B</p>\
+						  <p>{{ tips }}</p>\
+					   </div>',
+			data: function(){
+				return {
+					tips: ''
+				}
+			},
+			mounted: function(){
+				this.judgeParams()
+			},
+			methods: {
+				isNumber: function(value) {
+				    var patrn = /^[0-9]*$/;
+				    if (patrn.exec(value) == null || value == "") {
+				        return false
+				    } else {
+				        return true
+				    }
+				},
+				judgeParams: function(){
+					if(this.isNumber(this.$route.params.id)){
+						this.tips = "传入参数格式正确，参数为:" + this.$route.params.id
+					}else{
+						this.tips = "错误的参数"
+					}
+				}
+			},
+			// 无效
+			// updated: function(){
+			// 	 this.judgeParams();
+			// },
+			watch: {
+				'$route': function(to, from){
+					this.judgeParams()
+				}
+			}
+		}
+
+		var user_c = {
+			template: '<div>\
+							<p>我是第二层路由的组件Ｃ</p>\
+							<router-link to="/index_user/user_c/c_son" class="c_son-nav">去第三层路由</router-link>\
+							<router-view class="c_son-view"></router-view>\
+					   </div>'
+		}
+
+
+	/*************************** 第三层路由组件 **********************/
+
+		var c_son = {
+			template: '<p>我是第三层路由</p>'
+		}
+
+
+	/*************************** VueRouter 路由的定义、注册与挂载 **********************/
+
+		/*
+		*	定义路由匹配数组
+		*	注意事项：
+		*		第一层路由的 path 必须加上 /
+		*		之后第二、三....层的路由都不要加 /
+		*/
+		var myroutes = [
+			{
+				path: '/index_dish',
+				 component: index_dish
+			},
+			{
+				path: '/index_user',
+				component: index_user,
+				children: [ //	使用children定义下一层路由的匹配数组
+					{
+						path: 'user_a/:id/name/:name',
+						component: user_a
+					},
+					{
+						path: 'user_b/:id',
+						component: user_b
+					},
+					{
+						path: 'user_c',
+						component: user_c,
+						children: [	//	使用children定义下一层路由的匹配数组
+							{
+								path: 'c_son',
+								component: c_son
+							}
+						]
+					}
+			]}
+		]
+
+		//	使用定义的路由匹配数组注册一个路由
+		var myrouter = new VueRouter({
+			routes: myroutes
+		})
+
+		//	将该路由挂载到最高级别的父组件上
+		var app = new Vue({
+			el: '#app',
+			router: myrouter	//	挂载
+		})
+	</script>
+</body>
+</html>
